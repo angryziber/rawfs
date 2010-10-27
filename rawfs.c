@@ -24,12 +24,6 @@
 
 const char *photos_path = "/home/anton/Photos";
 
-char *to_real_path(char *dest, const char *path) 
-{
-	sprintf(dest, "%s%s", photos_path, path);
-	return dest;
-}
-
 int ends_with(const char *s, const char *ending)
 {
 	size_t slen = strlen(s);
@@ -39,6 +33,14 @@ int ends_with(const char *s, const char *ending)
 			return FALSE;
 	}
 	return TRUE;
+}
+
+char *to_real_path(char *dest, const char *path) 
+{
+	sprintf(dest, "%s%s", photos_path, path);
+	if (ends_with(dest, ".jpg"))
+		dest[strlen(dest)-4] = 0;
+	return dest;
 }
 
 static int rawfs_getattr(const char *path, struct stat *stbuf)
