@@ -45,6 +45,17 @@ void find_thumb(int fd, int *thumb_offset, int *thumb_length) {
 	}
 }
 
+int find_thumb_size(const char *path) {
+   	int thumb_offset = 0;
+    int thumb_length = 0;
+	int fd = open(path, O_RDONLY);
+    if (fd != -1) {
+    	find_thumb(fd, &thumb_offset, &thumb_length);
+		close(fd);
+    }
+    return thumb_length;
+}
+
 int ends_with(const char *s, const char *ending) {
 	size_t slen = strlen(s);
 	size_t elen = strlen(ending);
@@ -71,6 +82,7 @@ static int rawfs_getattr(const char *path, struct stat *stbuf) {
 	if (res == -1)
 		return -errno;
 
+    stbuf->st_size = find_thumb_size(path);
 	return 0;
 }
 
@@ -103,16 +115,16 @@ static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		return -errno;
 
 	while ((de = readdir(dp)) != NULL) {
-		struct stat st;
-		
 		if (de->d_type != DT_DIR && !(ends_with((char*)&de->d_name, ".CR2") || ends_with((char*)&de->d_name, ".cr2")))
 			continue;
-		
+	
+		struct stat st;
 		memset(&st, 0, sizeof(st));
 		st.st_ino = de->d_ino;
 		st.st_mode = de->d_type << 12;
+		st.st_size = find_thumb_size(de->d_name);
 		sprintf((char*)&new_path, "%s.jpg", de->d_name);
-		// TODO: report correct size
+
 		if (filler(buf, de->d_type != DT_DIR ? new_path : de->d_name, &st, 0))
 			break;
 	}
