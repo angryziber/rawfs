@@ -24,6 +24,27 @@
 
 const char *photos_path = "/home/anton/Photos";
 
+typedef unsigned short ushort;
+typedef unsigned int uint;
+
+struct tiff_tag {
+  ushort id, type;
+  int count;
+  union { char c[4]; short s[2]; int i; } val;
+};
+
+void find_thumb(int fd, int *thumb_offset, int *thumb_length) {    
+	lseek(fd, 16, SEEK_SET);
+	short ifd_size = 0;
+	read(fd, &ifd_size, 2);
+    struct tiff_tag tag;
+	for (int i = 0; i < ifd_size; i++) {
+	    read(fd, &tag, sizeof tag);
+	    if (tag.id == 0x111) *thumb_offset = tag.val.i;
+	    else if (tag.id == 0x117) *thumb_length = tag.val.i;
+	}
+}
+
 int ends_with(const char *s, const char *ending)
 {
 	size_t slen = strlen(s);
@@ -118,8 +139,7 @@ static int rawfs_open(const char *path, struct fuse_file_info *fi)
 	return 0;
 }
 
-static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
-{
+static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
 	int fd;
 	int res;
 	char new_path[2048];
@@ -130,7 +150,11 @@ static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, st
 	if (fd == -1)
 		return -errno;
 
-	res = pread(fd, buf, size, offset);
+	int thumb_offset = 0;
+	int thumb_length = 0;
+	find_thumb(fd, &thumb_offset, &thumb_length);
+
+	res = pread(fd, buf, size, thumb_offset + offset);
 	if (res == -1)
 		res = -errno;
 
