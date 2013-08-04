@@ -1,1 +1,1 @@
-gcc -Wall -std=gnu99 `pkg-config fuse --cflags --libs` rawfs.c -o rawfs
+gcc rawfs.c -Wall -std=gnu99 `pkg-config fuse --cflags --libs`  -o rawfs
