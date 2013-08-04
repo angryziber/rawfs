@@ -118,14 +118,8 @@ static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		if (de->d_type != DT_DIR && !(ends_with((char*)&de->d_name, ".CR2") || ends_with((char*)&de->d_name, ".cr2")))
 			continue;
 	
-		struct stat st;
-		memset(&st, 0, sizeof(st));
-		st.st_ino = de->d_ino;
-		st.st_mode = de->d_type << 12;
-		st.st_size = find_thumb_size(de->d_name);
 		sprintf((char*)&new_path, "%s.jpg", de->d_name);
-
-		if (filler(buf, de->d_type != DT_DIR ? new_path : de->d_name, &st, 0))
+		if (filler(buf, de->d_type != DT_DIR ? new_path : de->d_name, NULL, 0))
 			break;
 	}
 
