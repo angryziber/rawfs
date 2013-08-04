@@ -45,8 +45,7 @@ void find_thumb(int fd, int *thumb_offset, int *thumb_length) {
 	}
 }
 
-int ends_with(const char *s, const char *ending)
-{
+int ends_with(const char *s, const char *ending) {
 	size_t slen = strlen(s);
 	size_t elen = strlen(ending);
 	for (int i = 1; i <= elen; i++) {
@@ -56,16 +55,14 @@ int ends_with(const char *s, const char *ending)
 	return TRUE;
 }
 
-char *to_real_path(char *dest, const char *path) 
-{
+char *to_real_path(char *dest, const char *path)  {
 	sprintf(dest, "%s%s", photos_path, path);
 	if (ends_with(dest, ".jpg"))
 		dest[strlen(dest)-4] = 0;
 	return dest;
 }
 
-static int rawfs_getattr(const char *path, struct stat *stbuf)
-{
+static int rawfs_getattr(const char *path, struct stat *stbuf) {
 	int res;
 	char new_path[2048];
 	path = to_real_path(new_path, path);
@@ -77,8 +74,7 @@ static int rawfs_getattr(const char *path, struct stat *stbuf)
 	return 0;
 }
 
-static int rawfs_readlink(const char *path, char *buf, size_t size)
-{
+static int rawfs_readlink(const char *path, char *buf, size_t size) {
 	int res;
 	char new_path[2048];
 	path = to_real_path(new_path, path);
@@ -93,8 +89,7 @@ static int rawfs_readlink(const char *path, char *buf, size_t size)
 
 
 static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-		       off_t offset, struct fuse_file_info *fi)
-{
+		       off_t offset, struct fuse_file_info *fi) {
 	DIR *dp;
 	struct dirent *de;
 	char new_path[2048];
@@ -117,6 +112,7 @@ static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		st.st_ino = de->d_ino;
 		st.st_mode = de->d_type << 12;
 		sprintf((char*)&new_path, "%s.jpg", de->d_name);
+		// TODO: report correct size
 		if (filler(buf, de->d_type != DT_DIR ? new_path : de->d_name, &st, 0))
 			break;
 	}
@@ -125,8 +121,7 @@ static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 	return 0;
 }
 
-static int rawfs_open(const char *path, struct fuse_file_info *fi)
-{
+static int rawfs_open(const char *path, struct fuse_file_info *fi) {
 	int res;
 	char new_path[2048];
 
