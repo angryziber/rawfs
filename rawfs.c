@@ -100,8 +100,7 @@ static int rawfs_readlink(const char *path, char *buf, size_t size) {
 }
 
 
-static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
-		       off_t offset, struct fuse_file_info *fi) {
+static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
 	DIR *dp;
 	struct dirent *de;
 	char new_path[2048];
@@ -171,8 +170,7 @@ static struct fuse_operations rawfs_oper = {
 	.read		= rawfs_read
 };
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	umask(0);
 	return fuse_main(argc, argv, &rawfs_oper, NULL);
 }
