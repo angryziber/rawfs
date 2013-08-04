@@ -10,12 +10,18 @@ Build
 -----
 
 On Ubuntu:
- sudo apt-get install libfuse-dev
+```bash
+sudo apt-get install libfuse-dev
+```
 
 Then:
+```bash
  ./buid.sh
+```
 
 Usage
 -----
 
- ./rawfs mountpoint
+```bash
+./rawfs mountpoint
+```
