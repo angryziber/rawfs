@@ -33,7 +33,7 @@ fusermount -u mountpoint
 ```
 or
 ```bash
-sudo mount -u mountpoint
+sudo umount mountpoint
 ```
 
 Synology NAS
