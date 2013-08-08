@@ -38,11 +38,12 @@ void find_thumb(int fd, int *thumb_offset, int *thumb_length) {
 	lseek(fd, 16, SEEK_SET);
 	short ifd_size = 0;
 	read(fd, &ifd_size, 2);
-    struct tiff_tag tag;
+    struct tiff_tag tags[ifd_size];
+    read(fd, tags, ifd_size * sizeof *tags);
 	for (int i = 0; i < ifd_size; i++) {
-	    read(fd, &tag, sizeof tag);
-	    if (tag.id == 0x111) *thumb_offset = tag.val.i;
-	    else if (tag.id == 0x117) *thumb_length = tag.val.i;
+	    struct tiff_tag *tag = &tags[i];
+	    if (tag->id == 0x111) *thumb_offset = tag->val.i;
+	    else if (tag->id == 0x117) *thumb_length = tag->val.i;
 	}
 }
 
