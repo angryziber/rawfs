@@ -34,7 +34,7 @@ struct tiff_tag {
   union { char c[4]; short s[2]; int i; } val;
 };
 
-void find_thumb(int fd, int *thumb_offset, int *thumb_length) {    
+void find_thumb(int fd, int *thumb_offset, int *thumb_length) {
 	lseek(fd, 16, SEEK_SET);
 	short ifd_size = 0;
 	read(fd, &ifd_size, 2);
@@ -98,7 +98,6 @@ static int rawfs_readlink(const char *path, char *buf, size_t size) {
 	buf[res] = '\0';
 	return 0;
 }
-
 
 static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
 	char new_path[PATH_MAX];
