@@ -1,10 +1,22 @@
 rawfs
 =====
 
-FUSE filesystem that shows RAW image files (eg CR2) as their embedded JPEGs.
+FUSE filesystem that shows RAW image files (eg Canon CR2) as their embedded JPEGs.
 
 Very useful if you have bunch of apps that you want to use on your photos
 that don't support RAW files properly.
+
+You can easily mount your RAW photos directory to another location
+and browse it with a JPEG-only tool without noticing. 
+
+Unsupported files will be preserved as they are. No disk space is used when mounting.
+JPEG thumbnails are served directly from the original RAW files.
+
+Limitations
+-----------
+
+* Filesystem is read-only, thus only for browsing
+* Exif is not added to the JPEG files (yet), so auto rotation will not work
 
 Build
 -----
