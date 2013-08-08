@@ -38,9 +38,10 @@ Steps:
 2. Download FUSE sources from http://sf.net/projects/fuse/ (the NAS already has the kernel module)
 3. Extract both side-to-side into the same directory
 4. To cross-compile FUSE:
-
    ```bash
-      CPPFLAGS=-I`pwd`/../arm-none-linux-gnueabi/include/ CC=`pwd`/../arm-none-linux-gnueabi/bin/arm-none-linux-gnueabi-gcc ./configure --host=arm-none-linux-gnueabi --prefix=`pwd`/target
+      export CPPFLAGS=-I`pwd`/../arm-none-linux-gnueabi/include/
+      export CC=`pwd`/../arm-none-linux-gnueabi/bin/arm-none-linux-gnueabi-gcc
+      ./configure --host=arm-none-linux-gnueabi --prefix=`pwd`/target
       make
       make install
    ```
@@ -48,8 +49,7 @@ Steps:
 5. Clone rawfs side-by-side with fuse and the toolchain
 6. ./build-arm.sh - this will get you a nice rawfs-arm binary! Unfortunately, I didn't manage to link it with -static, so you will also need libfuse.so.2
 7. Now upload both rawfs-arm and libfuse.so.2 to your device and run with
-
    ```
-        LD_LIBRARY_PATH=. ./rawfs-arm
+      LD_LIBRARY_PATH=. ./rawfs-arm mountpoint
    ```
 
