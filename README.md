@@ -22,8 +22,18 @@ Then:
 Usage
 -----
 
+Mounting
 ```bash
-./rawfs mountpoint
+./rawfs photosdir mountpoint
+```
+
+Unmounting
+```bash
+fusermount -u mountpoint
+```
+or
+```bash
+sudo mount -u mountpoint
 ```
 
 Synology NAS
@@ -37,7 +47,7 @@ Steps:
    Get the right one for your DSM software version and CPU (my DS212j is Marvell 88F628x)
 2. Download FUSE sources from http://sf.net/projects/fuse/ (the NAS already has the kernel module)
 3. Extract both side-to-side into the same directory
-4. To cross-compile FUSE:
+4. To cross-compile FUSE (from the fuse dir):
    ```bash
       export CPPFLAGS=-I`pwd`/../arm-none-linux-gnueabi/include/
       export CC=`pwd`/../arm-none-linux-gnueabi/bin/arm-none-linux-gnueabi-gcc
