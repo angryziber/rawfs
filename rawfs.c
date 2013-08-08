@@ -23,7 +23,7 @@
 #include <errno.h>
 #include <sys/time.h>
 
-char *photos_path = "/home/anton/Photos";
+char *photos_path = NULL;
 
 typedef unsigned short ushort;
 typedef unsigned int uint;
@@ -75,11 +75,10 @@ char *to_real_path(char *dest, const char *path)  {
 }
 
 static int rawfs_getattr(const char *path, struct stat *stbuf) {
-	int res;
 	char new_path[PATH_MAX];
 	path = to_real_path(new_path, path);
 
-	res = lstat(path, stbuf);
+	int res = lstat(path, stbuf);
 	if (res == -1)
 		return -errno;
 
@@ -88,11 +87,10 @@ static int rawfs_getattr(const char *path, struct stat *stbuf) {
 }
 
 static int rawfs_readlink(const char *path, char *buf, size_t size) {
-	int res;
 	char new_path[PATH_MAX];
 	path = to_real_path(new_path, path);
 
-	res = readlink(path, buf, size - 1);
+	int res = readlink(path, buf, size - 1);
 	if (res == -1)
 		return -errno;
 
@@ -102,18 +100,13 @@ static int rawfs_readlink(const char *path, char *buf, size_t size) {
 
 
 static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
-	DIR *dp;
-	struct dirent *de;
 	char new_path[PATH_MAX];
-
-	(void) offset;
-	(void) fi;
-
 	path = to_real_path(new_path, path);
-	dp = opendir(path);
+	DIR *dp = opendir(path);
 	if (dp == NULL)
 		return -errno;
 
+	struct dirent *de;
 	while ((de = readdir(dp)) != NULL) {
 		if (de->d_type != DT_DIR && !(ends_with((char*)&de->d_name, ".CR2") || ends_with((char*)&de->d_name, ".cr2")))
 			continue;
@@ -128,11 +121,9 @@ static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 }
 
 static int rawfs_open(const char *path, struct fuse_file_info *fi) {
-	int res;
 	char new_path[PATH_MAX];
-
 	path = to_real_path(new_path, path);
-	res = open(path, fi->flags);
+	int res = open(path, fi->flags);
 	if (res == -1)
 		return -errno;
 
@@ -141,13 +132,9 @@ static int rawfs_open(const char *path, struct fuse_file_info *fi) {
 }
 
 static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
-	int fd;
-	int res;
 	char new_path[PATH_MAX];
-
-	(void) fi;
 	path = to_real_path((char*)&new_path, path);
-	fd = open(path, O_RDONLY);
+	int fd = open(path, O_RDONLY);
 	if (fd == -1)
 		return -errno;
 
@@ -155,7 +142,7 @@ static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, st
 	int thumb_length = 0;
 	find_thumb(fd, &thumb_offset, &thumb_length);
 
-	res = pread(fd, buf, size, thumb_offset + offset);
+	int res = pread(fd, buf, size, thumb_offset + offset);
 	if (res == -1)
 		res = -errno;
 
