@@ -15,6 +15,7 @@
 
 #include <fuse.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -75,7 +76,7 @@ char *to_real_path(char *dest, const char *path)  {
 
 static int rawfs_getattr(const char *path, struct stat *stbuf) {
 	int res;
-	char new_path[2048];
+	char new_path[PATH_MAX];
 	path = to_real_path(new_path, path);
 
 	res = lstat(path, stbuf);
@@ -88,7 +89,7 @@ static int rawfs_getattr(const char *path, struct stat *stbuf) {
 
 static int rawfs_readlink(const char *path, char *buf, size_t size) {
 	int res;
-	char new_path[2048];
+	char new_path[PATH_MAX];
 	path = to_real_path(new_path, path);
 
 	res = readlink(path, buf, size - 1);
@@ -103,7 +104,7 @@ static int rawfs_readlink(const char *path, char *buf, size_t size) {
 static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi) {
 	DIR *dp;
 	struct dirent *de;
-	char new_path[2048];
+	char new_path[PATH_MAX];
 
 	(void) offset;
 	(void) fi;
@@ -128,7 +129,7 @@ static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 static int rawfs_open(const char *path, struct fuse_file_info *fi) {
 	int res;
-	char new_path[2048];
+	char new_path[PATH_MAX];
 
 	path = to_real_path(new_path, path);
 	res = open(path, fi->flags);
@@ -142,7 +143,7 @@ static int rawfs_open(const char *path, struct fuse_file_info *fi) {
 static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
 	int fd;
 	int res;
-	char new_path[2048];
+	char new_path[PATH_MAX];
 
 	(void) fi;
 	path = to_real_path((char*)&new_path, path);
@@ -175,8 +176,12 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: original_dir mount_point\n");
         return 1;
     }
-    photos_path = argv[1];
-    fprintf(stderr, "Mounting %s\n", photos_path);
+    photos_path = realpath(argv[1], NULL);
+    if (!photos_path) {
+        fprintf(stderr, "Cannot read %s\n", argv[1]);
+        return 2;
+    }
+        
 	umask(0);
 	return fuse_main(argc-1, argv+1, &rawfs_oper, NULL);
 }
