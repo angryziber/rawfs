@@ -25,3 +25,24 @@ Usage
 ```bash
 ./rawfs mountpoint
 ```
+
+Synology NAS
+------------
+
+It makes sense to cross-compile rawfs for your Synology NAS.
+
+Steps:
+
+1. Download the toolchain from http://sf.net/projects/dsgpl/files/
+   Get the right one for your DSM software version and CPU (my DS212j is Marvell 88F628x)
+2. Download FUSE sources from http://sf.net/projects/fuse/ (the NAS already has the kernel module)
+3. Extract both side-to-side into the same directory
+4. To cross-compile FUSE:
+```bash
+  CPPFLAGS=-I`pwd`/../arm-none-linux-gnueabi/include/ CC=`pwd`/../arm-none-linux-gnueabi/bin/arm-none-linux-gnueabi-gcc ./configure --host=arm-none-linux-gnueabi --prefix=`pwd`/target
+  make
+  make install
+```
+5. Clone rawfs side-by-side with fuse and the toolchain
+6. ./build-arm.sh - this will get you a nice rawfs-arm binary!
+
