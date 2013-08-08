@@ -41,7 +41,9 @@ Synology NAS
 
 It makes sense to cross-compile rawfs for your Synology NAS.
 
-Steps:
+If you don't bother compiling by yourself, you may try my binaries. Check out the Releases link above.
+
+Steps to cross-compile:
 
 1. Download Synology toolchain from http://sf.net/projects/dsgpl/files/
    Get the right one for your DSM software version and CPU (my DS212j is Marvell 88F628x)
