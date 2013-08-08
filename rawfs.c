@@ -22,7 +22,7 @@
 #include <errno.h>
 #include <sys/time.h>
 
-const char *photos_path = "/home/anton/Photos";
+char *photos_path = "/home/anton/Photos";
 
 typedef unsigned short ushort;
 typedef unsigned int uint;
@@ -171,7 +171,13 @@ static struct fuse_operations rawfs_oper = {
 };
 
 int main(int argc, char *argv[]) {
+    if (argc < 3) {
+        fprintf(stderr, "Usage: original_dir mount_point\n");
+        return 1;
+    }
+    photos_path = argv[1];
+    fprintf(stderr, "Mounting %s\n", photos_path);
 	umask(0);
-	return fuse_main(argc, argv, &rawfs_oper, NULL);
+	return fuse_main(argc-1, argv+1, &rawfs_oper, NULL);
 }
 

@@ -60,6 +60,6 @@ Steps:
 6. ./build-arm.sh - this will get you a nice rawfs-arm binary! Unfortunately, I didn't manage to link it with -static, so you will also need libfuse.so.2
 7. Now upload both rawfs-arm and libfuse.so.2 to your device and run with
    ```
-      LD_LIBRARY_PATH=. ./rawfs-arm mountpoint
+      LD_LIBRARY_PATH=. ./rawfs-arm photosdir mountpoint
    ```
 
