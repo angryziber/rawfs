@@ -159,13 +159,18 @@ static struct fuse_operations rawfs_oper = {
 };
 
 int main(int argc, char *argv[]) {
-    if (argc < 3) {
-        fprintf(stderr, "Usage: original_dir mount_point\n");
+    if (argc < 3) 
+        fprintf(stderr, "usage: original_dir mountpoint [options]\n");
+
+    if (argc == 2 && argv[1][0] == '-') 
+        return fuse_main(argc, argv, &rawfs_oper, NULL);
+
+    if (argc < 3)
         return 1;
-    }
+    
     photos_path = realpath(argv[1], NULL);
     if (!photos_path) {
-        fprintf(stderr, "Cannot read %s\n", argv[1]);
+        fprintf(stderr, "rawfs: cannot read %s\n", argv[1]);
         return 2;
     }
         
