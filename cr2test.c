@@ -42,32 +42,18 @@ void find_thumb(int fd, int *thumb_offset, int *thumb_length, int *exif_offset) 
 	read(fd, &next_ifd, 4);
 	printf("next_ifd %d\n", next_ifd);
 		
-	int exif_length = next_ifd - *exif_offset;
-	
-	lseek(fd, *exif_offset, SEEK_SET);
-	read(fd, &ifd_size, 2);
-	printf("ifd_size %d\n", ifd_size);
-
-    struct tiff_tag etags[ifd_size];
-	read(fd, etags, ifd_size * sizeof *etags);
-
-	for (int i = 0; i < ifd_size; i++) {
-	    struct tiff_tag *tag = &etags[i];
-	    printf("exif 0x%x %d, %d\n", tag->id, tag->count, tag->val.i);
-	}
-	
-	char *data = malloc(10 + *thumb_length + exif_length);
+	char *data = malloc(10 + *thumb_length + next_ifd);
 	memcpy(data, "\xff\xd8\xff\xe1  Exif\0\0", 12);   // jpeg/exif starter
-	*(short*)&data[4] = htons(8 + exif_length);
-	memcpy(data+12, "II\x2a\x00\x08\x00\x00\x00", 8); // tiff header
+	*(short*)&data[4] = htons(2 + next_ifd);
 	
-	lseek(fd, *exif_offset, SEEK_SET);
-	read(fd, data+20, exif_length);
-	
+	lseek(fd, 0, SEEK_SET);
+	read(fd, data+12, next_ifd); // tiff header + exif data + etc
+	// need to fix next_ifd to 0: *(int*)&data[12 + 2 + ifd_size * 12] = 0;
+		
 	lseek(fd, *thumb_offset+2, SEEK_SET);
-	read(fd, data+20 + exif_length, *thumb_length-2);
+	read(fd, data+12 + next_ifd, *thumb_length-2);
 	
-	write_file("thumb_exif.jpg", data, 10 + *thumb_length + exif_length);
+	write_file("thumb_exif.jpg", data, 10 + *thumb_length + next_ifd);
 }
 
 int main(int argc, char* argv[]) {
