@@ -1,3 +1,9 @@
+/**
+ * Written by Anton Keks
+ * Licensed under GPLv3
+ * Unofficial CR2 spec: http://lclevy.free.fr/cr2/
+ */
+
 #define FUSE_USE_VERSION 26
 
 #define _BSD_SOURCE
