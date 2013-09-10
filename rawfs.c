@@ -22,11 +22,11 @@
 
 #include <fuse.h>
 #include <dirent.h>
-#include <errno.h>
 #include <sys/time.h>
 
 #include "raw.c"
 
+FILE *logf = NULL;
 char *photos_path = NULL;
 
 int jpeg_size(const char *path) {
@@ -34,10 +34,11 @@ int jpeg_size(const char *path) {
     img.out_length = 0;
 	int fd = open(path, O_RDONLY);
     if (fd != -1) {
-    	parse_raw(fd, &img);
+        int res = parse_raw(fd, &img);
 		close(fd);
+		if (res < 0) return res;
     }
-    return img.thumb_length;
+    return img.out_length;
 }
 
 int ends_with(const char *s, const char *ending) {
@@ -120,15 +121,19 @@ static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, st
 	if (fd == -1)
 		return -errno;
 
-	struct img_data img;
-	parse_raw(fd, &img);
+	if (logf) {
+	    fprintf(logf, "rawfs_read %s %d %d\n", path, size, offset);
+	    fflush(logf);
+	}
 
-	int res = pread(fd, buf, size, img.thumb_offset + offset);
-	if (res == -1)
-		res = -errno;
+	struct img_data img;
+	int res = prepare_jpeg(fd, &img);
+
+    memcpy(buf, img.out + offset, size);
+    free(img.out);
 
 	close(fd);
-	return res;
+	return size;
 }
 
 static struct fuse_operations rawfs_oper = {
@@ -148,6 +153,8 @@ int main(int argc, char *argv[]) {
 
     if (argc < 3)
         return 1;
+
+//    logf = fopen("rawfs.log", "wt");
     
     photos_path = realpath(argv[1], NULL);
     if (!photos_path) {
