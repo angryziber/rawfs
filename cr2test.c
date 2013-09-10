@@ -33,10 +33,14 @@ struct img_data {
   int out_length;
 };
 
+#define EXIF_HEADER "\xff\xd8\xff\xe1  Exif\0\0"
+#define EXIF_HEADER_LENGTH 12
+#define CR2_HEADER_LENGTH 16
+
 void find_thumb(int fd, struct img_data *img) {
     memset(img, 0, sizeof *img);
     
-	lseek(fd, 16, SEEK_SET);
+	lseek(fd, CR2_HEADER_LENGTH, SEEK_SET);
 	short ifd_size = 0;
 	read(fd, &ifd_size, 2);
     struct tiff_tag tags[ifd_size];
@@ -51,18 +55,20 @@ void find_thumb(int fd, struct img_data *img) {
 	read(fd, &img->ifd2_offset, 4);
 	printf("ifd2_offset %d\n", img->ifd2_offset);
 
-	img->out_length = 12 + img->thumb_length-2 + img->ifd2_offset;
+	img->out_length = EXIF_HEADER_LENGTH + img->thumb_length-2 + img->ifd2_offset;
 		
 	char *out = malloc(img->out_length);
-	memcpy(out, "\xff\xd8\xff\xe1  Exif\0\0", 12);   // jpeg/exif header
-	*(short*)&out[4] = htons(2 + img->ifd2_offset);  // exif data size
-	
+	memcpy(out, EXIF_HEADER, EXIF_HEADER_LENGTH);
+	char *outp = out + EXIF_HEADER_LENGTH;
+
+	*(short*)&out[4] = htons(8 + img->ifd2_offset);  // exif data size in the APP1 marker
 	lseek(fd, 0, SEEK_SET);
-	read(fd, out+12, img->ifd2_offset); // tiff header + exif data + etc
-	*(int*)&out[12 + 16 + 2 + ifd_size * sizeof *tags] = 0;
+	read(fd, outp, img->ifd2_offset); // tiff header + exif data + etc
+	*(int*)&outp[CR2_HEADER_LENGTH + 2 + ifd_size * sizeof *tags] = 0;
+	outp += img->ifd2_offset;
 		
 	lseek(fd, img->thumb_offset+2, SEEK_SET);
-	read(fd, out+12 + img->ifd2_offset, img->thumb_length-2);
+	read(fd, outp, img->thumb_length-2);
 	
 	write_file("thumb_exif.jpg", out, img->out_length);
 }
