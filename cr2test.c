@@ -42,7 +42,7 @@ void find_thumb(int fd, struct img_data *img) {
     
 	lseek(fd, CR2_HEADER_LENGTH, SEEK_SET);
 	short ifd_size = 0;
-	read(fd, &ifd_size, 2);
+	read(fd, &ifd_size, sizeof ifd_size);
     struct tiff_tag tags[ifd_size];
     read(fd, tags, ifd_size * sizeof *tags);
 	for (int i = 0; i < ifd_size; i++) {
@@ -64,10 +64,10 @@ void find_thumb(int fd, struct img_data *img) {
 	*(short*)&out[4] = htons(8 + img->ifd2_offset);  // exif data size in the APP1 marker
 	lseek(fd, 0, SEEK_SET);
 	read(fd, outp, img->ifd2_offset); // tiff header + exif data + etc
-	*(int*)&outp[CR2_HEADER_LENGTH + 2 + ifd_size * sizeof *tags] = 0;
+	*(int*)&outp[CR2_HEADER_LENGTH + sizeof ifd_size + ifd_size * sizeof *tags] = 0;
 	outp += img->ifd2_offset;
 		
-	lseek(fd, img->thumb_offset+2, SEEK_SET);
+	lseek(fd, img->thumb_offset+2, SEEK_SET); // skip 2 bytes - jpeg marker that is already included in EXIF_HEADER
 	read(fd, outp, img->thumb_length-2);
 	
 	write_file("thumb_exif.jpg", out, img->out_length);
