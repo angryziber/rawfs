@@ -29,6 +29,8 @@ struct img_data {
   int thumb_offset;
   int thumb_length;
   int exif_offset;
+  int ifd2_offset;
+  int out_length;
 };
 
 void find_thumb(int fd, struct img_data *img) {
@@ -46,22 +48,23 @@ void find_thumb(int fd, struct img_data *img) {
 	    else if (tag->id == 0x8769) img->exif_offset = tag->val.i;
 	}
 	
-	int next_ifd = 0;
-	read(fd, &next_ifd, 4);
-	printf("next_ifd %d\n", next_ifd);
+	read(fd, &img->ifd2_offset, 4);
+	printf("ifd2_offset %d\n", img->ifd2_offset);
+
+	img->out_length = 12 + img->thumb_length-2 + img->ifd2_offset;
 		
-	char *data = malloc(12 + img->thumb_length-2 + next_ifd);
-	memcpy(data, "\xff\xd8\xff\xe1  Exif\0\0", 12);   // jpeg/exif header
-	*(short*)&data[4] = htons(2 + next_ifd);          // exif data size
+	char *out = malloc(img->out_length);
+	memcpy(out, "\xff\xd8\xff\xe1  Exif\0\0", 12);   // jpeg/exif header
+	*(short*)&out[4] = htons(2 + img->ifd2_offset);  // exif data size
 	
 	lseek(fd, 0, SEEK_SET);
-	read(fd, data+12, next_ifd); // tiff header + exif data + etc
-	*(int*)&data[12 + 16 + 2 + ifd_size * sizeof *tags] = 0;
+	read(fd, out+12, img->ifd2_offset); // tiff header + exif data + etc
+	*(int*)&out[12 + 16 + 2 + ifd_size * sizeof *tags] = 0;
 		
 	lseek(fd, img->thumb_offset+2, SEEK_SET);
-	read(fd, data+12 + next_ifd, img->thumb_length-2);
+	read(fd, out+12 + img->ifd2_offset, img->thumb_length-2);
 	
-	write_file("thumb_exif.jpg", data, 10 + img->thumb_length + next_ifd);
+	write_file("thumb_exif.jpg", out, img->out_length);
 }
 
 int main(int argc, char* argv[]) {
