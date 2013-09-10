@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <arpa/inet.h>
 
@@ -27,24 +28,24 @@ struct tiff_tag {
 
 struct img_data {
   short ifd_size;
-  int thumb_offset;
-  int thumb_length;
-  int ifd2_offset;
-  int out_length;
+  off_t thumb_offset;
+  size_t thumb_length;
+  off_t ifd2_offset;
+  size_t out_length;
   char *out;
 };
 
 int parse_raw(int fd, struct img_data *img) {
     memset(img, 0, sizeof *img);
-    int res = 0;
+    size_t res = 0;
     
 	lseek(fd, CR2_HEADER_LENGTH, SEEK_SET);
 	res = read(fd, &img->ifd_size, sizeof img->ifd_size);
-	if (res < 0) return res;
+	if (res == -1) return -errno;
 	
     struct tiff_tag tags[img->ifd_size];
     res = read(fd, tags, img->ifd_size * sizeof *tags);
-  	if (res < 0) return res;
+  	if (res == -1) return -errno;
 
 	for (int i = 0; i < img->ifd_size; i++) {
 	    struct tiff_tag *tag = &tags[i];
@@ -53,12 +54,14 @@ int parse_raw(int fd, struct img_data *img) {
 	}
 
 	res = read(fd, &img->ifd2_offset, 4);
+  	if (res == -1) return -errno;
+
 	img->out_length = EXIF_HEADER_LENGTH + img->thumb_length-2 + img->ifd2_offset;
-	return res;
+	return 0;
 }
 
 int prepare_jpeg(int fd, struct img_data *img) {
-    int res = 0;
+    size_t res = 0;
     res = parse_raw(fd, img);
    	if (res < 0) return res;
 
@@ -69,12 +72,21 @@ int prepare_jpeg(int fd, struct img_data *img) {
 	outp += EXIF_HEADER_LENGTH;
 
 	res = pread(fd, outp, img->ifd2_offset, 0); // tiff header + exif data + etc
-	if (res < 0) return res;
+	if (res == -1) return -errno;
 
 	int ifd_length = sizeof img->ifd_size + img->ifd_size * sizeof(struct tiff_tag);
 	*(int*)&outp[CR2_HEADER_LENGTH + ifd_length] = 0;
 	outp += img->ifd2_offset;
 		
-	return pread(fd, outp, img->thumb_length-2, img->thumb_offset+2); // skip 2 bytes - jpeg marker that is already included in EXIF_HEADER
+	res = pread(fd, outp, img->thumb_length-2, img->thumb_offset+2); // skip 2 bytes - jpeg marker that is already included in EXIF_HEADER
+	if (res == -1) return -errno;
+	return 0;
+}
+
+void write_file(const char* path, const char* data, int len) {
+    FILE* ofp = fopen(path, "wb");
+    fwrite(data, 1, len, ofp);
+    fclose(ofp);
+    printf("Written %s\n", path);
 }
 
