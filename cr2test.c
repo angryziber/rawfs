@@ -42,13 +42,13 @@ void find_thumb(int fd, int *thumb_offset, int *thumb_length, int *exif_offset) 
 	read(fd, &next_ifd, 4);
 	printf("next_ifd %d\n", next_ifd);
 		
-	char *data = malloc(10 + *thumb_length + next_ifd);
-	memcpy(data, "\xff\xd8\xff\xe1  Exif\0\0", 12);   // jpeg/exif starter
-	*(short*)&data[4] = htons(2 + next_ifd);
+	char *data = malloc(12 + *thumb_length-2 + next_ifd);
+	memcpy(data, "\xff\xd8\xff\xe1  Exif\0\0", 12);   // jpeg/exif header
+	*(short*)&data[4] = htons(2 + next_ifd);          // exif data size
 	
 	lseek(fd, 0, SEEK_SET);
 	read(fd, data+12, next_ifd); // tiff header + exif data + etc
-	// need to fix next_ifd to 0: *(int*)&data[12 + 2 + ifd_size * 12] = 0;
+	*(int*)&data[12 + 16 + 2 + ifd_size * sizeof *tags] = 0;
 		
 	lseek(fd, *thumb_offset+2, SEEK_SET);
 	read(fd, data+12 + next_ifd, *thumb_length-2);
