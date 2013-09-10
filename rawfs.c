@@ -1,7 +1,8 @@
 /**
+ * RAW photo filesystem (based on fuse) that shows raw photos as their embedded jpeg thumbnails
+ * Tested with Canon CR2 (NEF, PEF, etc testing needed)
  * Written by Anton Keks
  * Licensed under GPLv3
- * Unofficial CR2 spec: http://lclevy.free.fr/cr2/
  */
 
 #define FUSE_USE_VERSION 26
@@ -20,48 +21,22 @@
 #endif
 
 #include <fuse.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <dirent.h>
 #include <errno.h>
 #include <sys/time.h>
 
+#include "raw.c"
+
 char *photos_path = NULL;
 
-typedef unsigned short ushort;
-typedef unsigned int uint;
-
-struct tiff_tag {
-  ushort id, type;
-  int count;
-  union { char c[4]; short s[2]; int i; } val;
-};
-
-void find_thumb(int fd, int *thumb_offset, int *thumb_length) {
-	lseek(fd, 16, SEEK_SET);
-	short ifd_size = 0;
-	read(fd, &ifd_size, 2);
-    struct tiff_tag tags[ifd_size];
-    read(fd, tags, ifd_size * sizeof *tags);
-	for (int i = 0; i < ifd_size; i++) {
-	    struct tiff_tag *tag = &tags[i];
-	    if (tag->id == 0x111) *thumb_offset = tag->val.i;
-	    else if (tag->id == 0x117) *thumb_length = tag->val.i;
-	}
-}
-
 int find_thumb_size(const char *path) {
-   	int thumb_offset = 0;
-    int thumb_length = 0;
+    struct img_data img;
 	int fd = open(path, O_RDONLY);
     if (fd != -1) {
-    	find_thumb(fd, &thumb_offset, &thumb_length);
+    	find_thumb(fd, &img);
 		close(fd);
     }
-    return thumb_length;
+    return img.thumb_length;
 }
 
 int ends_with(const char *s, const char *ending) {
@@ -144,11 +119,10 @@ static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, st
 	if (fd == -1)
 		return -errno;
 
-	int thumb_offset = 0;
-	int thumb_length = 0;
-	find_thumb(fd, &thumb_offset, &thumb_length);
+	struct img_data img;
+	find_thumb(fd, &img);
 
-	int res = pread(fd, buf, size, thumb_offset + offset);
+	int res = pread(fd, buf, size, img.thumb_offset + offset);
 	if (res == -1)
 		res = -errno;
 
