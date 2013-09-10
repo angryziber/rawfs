@@ -140,7 +140,7 @@ static struct fuse_operations rawfs_oper = {
 
 int main(int argc, char *argv[]) {
     if (argc < 3) 
-        fprintf(stderr, "usage: original_dir mountpoint [options]\n");
+        fprintf(stderr, "usage: %s original_dir mountpoint [options]\n", argv[0]);
 
     if (argc == 2 && argv[1][0] == '-') 
         return fuse_main(argc, argv, &rawfs_oper, NULL);

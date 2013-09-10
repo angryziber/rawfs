@@ -14,6 +14,11 @@ void write_file(const char* path, const char* data, int len) {
 }
 
 int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        fprintf(stderr, "usage: %s photo\n", argv[0]);
+        return 1;
+    }
+
    	struct img_data img;
 	int fd = open(argv[1], O_RDONLY);
     if (fd != -1) {
