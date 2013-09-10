@@ -106,33 +106,31 @@ static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 static int rawfs_open(const char *path, struct fuse_file_info *fi) {
 	char new_path[PATH_MAX];
 	path = to_real_path(new_path, path);
-	int res = open(path, fi->flags);
-	if (res == -1)
+	fi->fh = open(path, fi->flags);
+	if (fi->fh == -1)
 		return -errno;
 
-	close(res);
+	return 0;
+}
+
+static int rawfs_release(const char *path, struct fuse_file_info *fi) {
+    close(fi->fh);
 	return 0;
 }
 
 static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
-	char new_path[PATH_MAX];
-	path = to_real_path((char*)&new_path, path);
-	int fd = open(path, O_RDONLY);
-	if (fd == -1)
-		return -errno;
-
 	if (logf) {
-	    fprintf(logf, "rawfs_read %s %d %d\n", path, size, offset);
+	    fprintf(logf, "rawfs_read %d %d %d\n", fi->fh, size, offset);
 	    fflush(logf);
 	}
 
 	struct img_data img;
-	int res = prepare_jpeg(fd, &img);
+	int res = prepare_jpeg(fi->fh, &img);
+	if (res < 0) return res;
 
     memcpy(buf, img.out + offset, size);
     free(img.out);
 
-	close(fd);
 	return size;
 }
 
@@ -141,6 +139,7 @@ static struct fuse_operations rawfs_oper = {
 	.readlink	= rawfs_readlink,
 	.readdir	= rawfs_readdir,
 	.open		= rawfs_open,
+	.release    = rawfs_release,
 	.read		= rawfs_read
 };
 
