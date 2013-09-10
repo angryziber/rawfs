@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
        	write_file("thumb_exif.jpg", img.out, img.out_length);
     	free(img.out);
 		close(fd);
-		printf("thumb_offset 0x%x, thumb_length %d, exif_offset %d\n", img.thumb_offset, img.thumb_length, img.exif_offset);
+		printf("thumb_offset 0x%x, thumb_length %d", img.thumb_offset, img.thumb_length);
     }
     return 0;
 }

@@ -29,11 +29,12 @@
 
 char *photos_path = NULL;
 
-int find_thumb_size(const char *path) {
+int jpeg_size(const char *path) {
     struct img_data img;
+    img.out_length = 0;
 	int fd = open(path, O_RDONLY);
     if (fd != -1) {
-    	find_thumb(fd, &img);
+    	parse_raw(fd, &img);
 		close(fd);
     }
     return img.thumb_length;
@@ -64,7 +65,7 @@ static int rawfs_getattr(const char *path, struct stat *stbuf) {
 	if (res == -1)
 		return -errno;
 
-    stbuf->st_size = find_thumb_size(path);
+    stbuf->st_size = jpeg_size(path);
 	return 0;
 }
 
@@ -120,7 +121,7 @@ static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, st
 		return -errno;
 
 	struct img_data img;
-	find_thumb(fd, &img);
+	parse_raw(fd, &img);
 
 	int res = pread(fd, buf, size, img.thumb_offset + offset);
 	if (res == -1)

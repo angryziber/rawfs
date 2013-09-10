@@ -29,13 +29,12 @@ struct img_data {
   short ifd_size;
   int thumb_offset;
   int thumb_length;
-  int exif_offset;
   int ifd2_offset;
   int out_length;
   char *out;
 };
 
-void find_thumb(int fd, struct img_data *img) {
+void parse_raw(int fd, struct img_data *img) {
     memset(img, 0, sizeof *img);
     
 	lseek(fd, CR2_HEADER_LENGTH, SEEK_SET);
@@ -46,7 +45,6 @@ void find_thumb(int fd, struct img_data *img) {
 	    struct tiff_tag *tag = &tags[i];
 	    if (tag->id == 0x111) img->thumb_offset = tag->val.i;
 	    else if (tag->id == 0x117) img->thumb_length = tag->val.i;
-	    else if (tag->id == 0x8769) img->exif_offset = tag->val.i;
 	}
 	read(fd, &img->ifd2_offset, 4);
 
@@ -54,7 +52,7 @@ void find_thumb(int fd, struct img_data *img) {
 }
 
 void prepare_jpeg(int fd, struct img_data *img) {
-    find_thumb(fd, img);
+    parse_raw(fd, img);
 	char *outp = img->out = malloc(img->out_length);
 	
 	memcpy(outp, EXIF_HEADER, EXIF_HEADER_LENGTH);
