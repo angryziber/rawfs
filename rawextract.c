@@ -1,3 +1,9 @@
+/*
+ * Command-line utility to extract jpeg thumbnail from raw photo
+ * Minimalistic version, much smaller than similar code in dcraw.c
+ * Written by Anton Keks
+ */
+
 #include "raw.c"
 
 void write_file(const char* path, const char* data, int len) {
