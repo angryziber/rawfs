@@ -15,12 +15,20 @@ int main(int argc, char* argv[]) {
    	struct img_data img;
 	int fd = open(argv[1], O_RDONLY);
     if (fd != -1) {
-        prepare_jpeg(fd, &img);        
-       	write_file("thumb_exif.jpg", img.out, img.out_length);
-    	free(img.out);
-		close(fd);
-		printf("thumb_offset 0x%zx, thumb_length %zu\n", img.thumb_offset, img.thumb_length);
+        fprintf(stderr, "cannot open %s\n", argv[1]);
+        return 1;
     }
+    
+    int res = prepare_jpeg(fd, &img);
+    if (res < 0) {
+        fprintf(stderr, "cannot parse %s\n", argv[1]);
+        return 2;
+    }
+	close(fd);
+
+   	write_file("thumb_exif.jpg", img.out, img.out_length);
+	free(img.out);
+	printf("thumb_offset 0x%zx, thumb_length %zu\n", img.thumb_offset, img.thumb_length);
     return 0;
 }
 
