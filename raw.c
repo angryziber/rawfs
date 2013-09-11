@@ -32,6 +32,7 @@ struct tiff_tag {
 };
 
 struct img_data {
+  int fd;
   struct tiff_head header;
   short ifd_size;
   off_t thumb_offset;
@@ -43,6 +44,7 @@ struct img_data {
 
 int parse_raw(int fd, struct img_data *img) {
     memset(img, 0, sizeof *img);
+    img->fd = fd;
     size_t res = 0;
     
     read(fd, &img->header, sizeof img->header);
@@ -71,26 +73,41 @@ int parse_raw(int fd, struct img_data *img) {
 	return 0;
 }
 
+int copy_exif_header(char *outp, struct img_data *img) {
+	memcpy(outp, EXIF_HEADER, EXIF_HEADER_LENGTH);
+	*(short*)&outp[4] = htons(8 + img->ifd2_offset);  // exif data size in the APP1 marker
+	return EXIF_HEADER_LENGTH;
+}
+
+int copy_exif_data(char *outp, struct img_data *img) {
+	int res = pread(img->fd, outp, img->ifd2_offset, 0); // tiff header + exif data + etc
+	if (res == -1) return -errno;
+
+	int ifd_length = sizeof img->ifd_size + img->ifd_size * sizeof(struct tiff_tag);
+	*(int*)&outp[img->header.length + ifd_length] = 0;
+	return img->ifd2_offset;
+}
+
+int copy_jpeg_data(char *outp, struct img_data *img) {
+    // skip 2 bytes - jpeg marker that is already included in EXIF_HEADER
+	int res = pread(img->fd, outp, img->thumb_length-2, img->thumb_offset+2);
+	return res == -1 ? -errno : res;
+}
+
 int prepare_jpeg(int fd, struct img_data *img) {
     size_t res = 0;
     res = parse_raw(fd, img);
    	if (res < 0) return res;
 
 	char *outp = img->out = malloc(img->out_length);
-	
-	memcpy(outp, EXIF_HEADER, EXIF_HEADER_LENGTH);
-	*(short*)&outp[4] = htons(8 + img->ifd2_offset);  // exif data size in the APP1 marker
-	outp += EXIF_HEADER_LENGTH;
+	outp += copy_exif_header(outp, img);
 
-	res = pread(fd, outp, img->ifd2_offset, 0); // tiff header + exif data + etc
-	if (res == -1) return -errno;
-
-	int ifd_length = sizeof img->ifd_size + img->ifd_size * sizeof(struct tiff_tag);
-	*(int*)&outp[img->header.length + ifd_length] = 0;
-	outp += img->ifd2_offset;
+    res = copy_exif_data(outp, img);
+    if (res < 0) return res; else outp += res;
+    
+    res = copy_jpeg_data(outp, img);
+    if (res < 0) return res; else outp += res;
 		
-	res = pread(fd, outp, img->thumb_length-2, img->thumb_offset+2); // skip 2 bytes - jpeg marker that is already included in EXIF_HEADER
-	if (res == -1) return -errno;
 	return 0;
 }
 
