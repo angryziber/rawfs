@@ -15,10 +15,15 @@
 
 #define EXIF_HEADER "\xff\xd8\xff\xe1  Exif\0\0"
 #define EXIF_HEADER_LENGTH 12
-#define CR2_HEADER_LENGTH 16
 
 typedef unsigned short ushort;
 typedef unsigned int uint;
+
+struct tiff_head {
+  short byte_order; // II or MM
+  short magic; // always 0x002a
+  short length;
+};
 
 struct tiff_tag {
   ushort id, type;
@@ -27,6 +32,7 @@ struct tiff_tag {
 };
 
 struct img_data {
+  struct tiff_head header;
   short ifd_size;
   off_t thumb_offset;
   size_t thumb_length;
@@ -39,7 +45,12 @@ int parse_raw(int fd, struct img_data *img) {
     memset(img, 0, sizeof *img);
     size_t res = 0;
     
-	lseek(fd, CR2_HEADER_LENGTH, SEEK_SET);
+    read(fd, &img->header, sizeof img->header);
+    if (img->header.byte_order != 0x4949 || img->header.magic != 0x002a)
+        return -1;  // we support only Intel byte order
+    
+    lseek(fd, img->header.length, SEEK_SET);
+    
 	res = read(fd, &img->ifd_size, sizeof img->ifd_size);
 	if (res == -1) return -errno;
 	
@@ -75,7 +86,7 @@ int prepare_jpeg(int fd, struct img_data *img) {
 	if (res == -1) return -errno;
 
 	int ifd_length = sizeof img->ifd_size + img->ifd_size * sizeof(struct tiff_tag);
-	*(int*)&outp[CR2_HEADER_LENGTH + ifd_length] = 0;
+	*(int*)&outp[img->header.length + ifd_length] = 0;
 	outp += img->ifd2_offset;
 		
 	res = pread(fd, outp, img->thumb_length-2, img->thumb_offset+2); // skip 2 bytes - jpeg marker that is already included in EXIF_HEADER
