@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
        	write_file("thumb_exif.jpg", img.out, img.out_length);
     	free(img.out);
 		close(fd);
-		printf("thumb_offset 0x%x, thumb_length %d\n", img.thumb_offset, img.thumb_length);
+		printf("thumb_offset 0x%zx, thumb_length %zu\n", img.thumb_offset, img.thumb_length);
     }
     return 0;
 }

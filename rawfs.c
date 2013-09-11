@@ -26,7 +26,7 @@
 
 #include "raw.c"
 
-FILE *logf = NULL;
+FILE *flog = NULL;
 char *photos_path = NULL;
 
 int jpeg_size(const char *path) {
@@ -103,34 +103,46 @@ static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 	return 0;
 }
 
-static int rawfs_open(const char *path, struct fuse_file_info *fi) {
-	char new_path[PATH_MAX];
-	path = to_real_path(new_path, path);
-	fi->fh = open(path, fi->flags);
-	if (fi->fh == -1)
-		return -errno;
-
+static int rawfs_release(const char *path, struct fuse_file_info *fi) {
+    struct img_data *img = (struct img_data*)fi->fh;
+    free(img->out);
+    free(img);
 	return 0;
 }
 
-static int rawfs_release(const char *path, struct fuse_file_info *fi) {
-    close(fi->fh);
+static int rawfs_open(const char *path, struct fuse_file_info *fi) {
+	char new_path[PATH_MAX];
+	path = to_real_path(new_path, path);
+
+	int fd = open(path, fi->flags);
+	if (fd == -1)
+		return -errno;
+		
+	struct img_data *img = malloc(sizeof *img);
+	int res = prepare_jpeg(fd, img);
+	fi->fh = (size_t)img;
+	
+	if (flog) {
+	    fprintf(flog, "rawfs_open %s %zu %zu\n", path, fi->fh, (size_t)img);
+	    fflush(flog);
+	}
+
+	close(fd);
+	if (res < 0) {
+	    rawfs_release(path, fi);
+	    return res;	    
+	}
 	return 0;
 }
 
 static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
-	if (logf) {
-	    fprintf(logf, "rawfs_read %d %d %d\n", fi->fh, size, offset);
-	    fflush(logf);
+	if (flog) {
+	    fprintf(flog, "rawfs_read %zu %zu %zu\n", fi->fh, size, offset);
+	    fflush(flog);
 	}
 
-	struct img_data img;
-	int res = prepare_jpeg(fi->fh, &img);
-	if (res < 0) return res;
-
-    memcpy(buf, img.out + offset, size);
-    free(img.out);
-
+    struct img_data *img = (struct img_data*)fi->fh;
+    memcpy(buf, img->out + offset, size);
 	return size;
 }
 
@@ -153,7 +165,7 @@ int main(int argc, char *argv[]) {
     if (argc < 3)
         return 1;
 
-//    logf = fopen("rawfs.log", "wt");
+//    flog = fopen("rawfs.log", "wt");
     
     photos_path = realpath(argv[1], NULL);
     if (!photos_path) {
