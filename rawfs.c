@@ -136,12 +136,14 @@ static int rawfs_open(const char *path, struct fuse_file_info *fi) {
 }
 
 static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
+    struct img_data *img = (struct img_data*)(intptr_t)fi->fh;
 	if (flog) {
-	    fprintf(flog, "rawfs_read %zu %zu %zu\n", fi->fh, size, offset);
+	    fprintf(flog, "rawfs_read %zu %zu %u\n", size, offset, img->out_length);
 	    fflush(flog);
 	}
 
-    struct img_data *img = (struct img_data*)(intptr_t)fi->fh;
+    if (offset > img->out_length) return 0;
+    if (offset + size > img->out_length) size = img->out_length - offset;
     memcpy(buf, img->out + offset, size);
 	return size;
 }
