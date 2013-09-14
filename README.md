@@ -29,26 +29,24 @@ For Synology you will need both libfuse.so.2 and rawfs-arm.
 Usage
 -----
 
-Mounting
+Mounting:
 ```bash
 ./rawfs photosdir mountpoint
 ```
 
-Unmounting
+Unmounting, either one of these:
 ```bash
 fusermount -u mountpoint
-```
-or
-```bash
 sudo umount mountpoint
+killall rawfs
 ```
 
-Just extract the embedded jpeg
+Just extract the embedded jpeg:
 ```bash
 ./rawextract filename
 ```
 
-Mounting on Synology NAS
+Mounting on Synology NAS:
 ```bash
 LD_LIBRARY_PATH=. ./rawfs-arm photosdir mountpoint -o allow_other
 ```
