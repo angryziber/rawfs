@@ -18,6 +18,7 @@ Limitations
 -----------
 
 * Filesystem is read-only, thus only for browsing
+* Tested only with Canon CR2 files (Nikon NEF, Pentax PEF, etc testing needed)
 
 Download
 --------
