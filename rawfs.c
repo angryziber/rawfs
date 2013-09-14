@@ -104,7 +104,7 @@ static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 }
 
 static int rawfs_release(const char *path, struct fuse_file_info *fi) {
-    struct img_data *img = (struct img_data*)fi->fh;
+    struct img_data *img = (struct img_data*)(intptr_t)fi->fh;
     free(img->out);
     free(img);
 	return 0;
@@ -141,7 +141,7 @@ static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, st
 	    fflush(flog);
 	}
 
-    struct img_data *img = (struct img_data*)fi->fh;
+    struct img_data *img = (struct img_data*)(intptr_t)fi->fh;
     memcpy(buf, img->out + offset, size);
 	return size;
 }
