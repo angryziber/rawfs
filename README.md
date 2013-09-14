@@ -43,10 +43,16 @@ or
 sudo umount mountpoint
 ```
 
-Synology:
+Just extract the embedded jpeg
+```bash
+./rawextract filename
 ```
+
+Mounting on Synology NAS
+```bash
 LD_LIBRARY_PATH=. ./rawfs-arm photosdir mountpoint -o allow_other
 ```
+allow_other option will allow other users to see the mounted dir (by default in Fuse, only the user who ran the mount can see the files)
 
 Build
 -----
