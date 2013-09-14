@@ -120,10 +120,10 @@ static int rawfs_open(const char *path, struct fuse_file_info *fi) {
 		
 	struct img_data *img = malloc(sizeof *img);
 	int res = prepare_jpeg(fd, img);
-	fi->fh = (size_t)img;
+	fi->fh = (uintptr_t)img;
 	
 	if (flog) {
-	    fprintf(flog, "rawfs_open %s %zu %zu\n", path, fi->fh, (size_t)img);
+	    fprintf(flog, "rawfs_open %s\n", path);
 	    fflush(flog);
 	}
 
