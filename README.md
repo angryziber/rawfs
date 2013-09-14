@@ -12,24 +12,19 @@ and browse it with a JPEG-only tool without noticing.
 Unsupported files will be preserved as they are. No disk space is used when mounting.
 JPEG thumbnails are served directly from the original RAW files.
 
+The original exif data is also added to the jpegs, so that autorotation, etc will work.
+
 Limitations
 -----------
 
 * Filesystem is read-only, thus only for browsing
-* Exif is not added to the JPEG files (yet), so auto rotation will not work
 
-Build
------
+Download
+--------
 
-On Ubuntu:
-```bash
-sudo apt-get install libfuse-dev
-```
+You can download Linux 64-bit binaries and Synology ARM binaries from [github releases](https://github.com/angryziber/rawfs/releases).
 
-Then:
-```bash
- ./buid.sh
-```
+For Synology you will need both libfuse.so.2 and rawfs-arm.
 
 Usage
 -----
@@ -48,12 +43,26 @@ or
 sudo umount mountpoint
 ```
 
+Synology:
+```
+LD_LIBRARY_PATH=. ./rawfs-arm photosdir mountpoint -o allow_other
+```
+
+Build
+-----
+
+On Ubuntu:
+```bash
+sudo apt-get install libfuse-dev
+```
+
+Then:
+```bash
+ ./buid.sh
+```
+
 Synology NAS
 ------------
-
-It makes sense to cross-compile rawfs for your Synology NAS.
-
-If you don't bother compiling by yourself, you may try my binaries. Check out the Releases link above.
 
 Steps to cross-compile:
 
@@ -72,7 +81,4 @@ Steps to cross-compile:
 
 5. Clone rawfs side-by-side with fuse and the toolchain
 6. ./build-arm.sh - this will get you a nice rawfs-arm binary! Unfortunately, I didn't manage to link it with -static, so you will also need libfuse.so.2
-7. Now upload both rawfs-arm and libfuse.so.2 to your device and run with
-   ```
-      LD_LIBRARY_PATH=. ./rawfs-arm photosdir mountpoint -o allow_other
-   ```
+7. Now upload both rawfs-arm and libfuse.so.2 to your device and run as indicated in the Usage section above
