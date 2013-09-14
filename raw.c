@@ -34,11 +34,11 @@ struct tiff_tag {
 struct img_data {
   int fd;
   struct tiff_head header;
-  short ifd_size;
-  off_t thumb_offset;
-  size_t thumb_length;
-  off_t ifd2_offset;
-  size_t out_length;
+  unsigned short ifd_size;
+  unsigned int thumb_offset;
+  unsigned int thumb_length;
+  unsigned int exif_data_length;
+  unsigned int out_length;
   char *out;
 };
 
@@ -66,26 +66,32 @@ int parse_raw(int fd, struct img_data *img) {
 	    else if (tag->id == 0x117) img->thumb_length = tag->val.i;
 	}
 
-	res = read(fd, &img->ifd2_offset, 4);
+    // next ifd offset is the length of whole exif
+	res = read(fd, &img->exif_data_length, 4);
   	if (res == -1) return -errno;
 
-	img->out_length = EXIF_HEADER_LENGTH + img->thumb_length-2 + img->ifd2_offset;
+	img->out_length = EXIF_HEADER_LENGTH + img->exif_data_length + img->thumb_length-2;
 	return 0;
+}
+
+int min(int a, int b) {
+    return a < b ? a : b;
 }
 
 int copy_exif_header(char *outp, struct img_data *img) {
 	memcpy(outp, EXIF_HEADER, EXIF_HEADER_LENGTH);
-	*(short*)&outp[4] = htons(8 + img->ifd2_offset);  // exif data size in the APP1 marker
+	*(short*)&outp[4] = htons(8 + img->exif_data_length);  // exif data size in the APP1 marker
 	return EXIF_HEADER_LENGTH;
 }
 
-int copy_exif_data(char *outp, struct img_data *img) {
-	int res = pread(img->fd, outp, img->ifd2_offset, 0); // tiff header + exif data + etc
+int copy_exif_data(char *outp, struct img_data *img, int offset, int size) {
+	int res = pread(img->fd, outp, min(size, img->exif_data_length), offset); // tiff header + exif data + etc
 	if (res == -1) return -errno;
 
 	int ifd_length = sizeof img->ifd_size + img->ifd_size * sizeof(struct tiff_tag);
-	*(int*)&outp[img->header.length + ifd_length] = 0;
-	return img->ifd2_offset;
+	int next_ifd = img->header.length + ifd_length;
+	if (next_ifd < offset + size) *(int*)&outp[next_ifd - offset] = 0;
+	return res;
 }
 
 int copy_jpeg_data(char *outp, struct img_data *img) {
@@ -102,7 +108,7 @@ int prepare_jpeg(int fd, struct img_data *img) {
 	char *outp = img->out = malloc(img->out_length);
 	outp += copy_exif_header(outp, img);
 
-    res = copy_exif_data(outp, img);
+    res = copy_exif_data(outp, img, 0, img->exif_data_length);
     if (res < 0) return res; else outp += res;
     
     res = copy_jpeg_data(outp, img);
