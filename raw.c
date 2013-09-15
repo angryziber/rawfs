@@ -101,8 +101,7 @@ int copy_jpeg_data(char *outp, struct img_data *img) {
 }
 
 int prepare_jpeg(int fd, struct img_data *img) {
-    size_t res = 0;
-    res = parse_raw(fd, img);
+    int res = parse_raw(fd, img);
    	if (res < 0) return res;
 
 	char *outp = img->out = malloc(img->out_length);
