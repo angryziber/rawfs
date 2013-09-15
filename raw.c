@@ -1,7 +1,8 @@
 /* 
  * Common raw parsing code
  * Written by Anton Keks
- * CR2 spec:  http://lclevy.free.fr/cr2/
+ * CR2 spec:  http://lclevy.free.fr/cr2/ (uses Intel byte order)
+ * NEF spec:  http://lclevy.free.fr/nef/ (uses Motorola byte order)
  * Exif spec: http://www.media.mit.edu/pia/Research/deepview/exif.html
  */
 

@@ -7,9 +7,9 @@ Very useful if you have bunch of apps that you want to use on your photos
 that don't support RAW files properly.
 
 You can easily mount your RAW photos directory to another location
-and browse it with a JPEG-only tool without noticing. 
+and browse it with a JPEG-only tool without noticing.
 
-Unsupported files will be preserved as they are. No disk space is used when mounting.
+Unsupported files will not be shown. No additional disk space is used when mounting.
 JPEG thumbnails are served directly from the original RAW files.
 
 The original exif data is also added to the jpegs, so that autorotation, etc will work.
@@ -18,7 +18,7 @@ Limitations
 -----------
 
 * Filesystem is read-only, thus only for browsing
-* Tested only with Canon CR2 files (Nikon NEF, Pentax PEF, etc testing needed)
+* Tested only with Canon CR2 files (Nikon NEF, Pentax PEF, etc need some fixes)
 
 Download
 --------

@@ -1,6 +1,6 @@
 /**
  * RAW photo filesystem (based on fuse) that shows raw photos as their embedded jpeg thumbnails
- * Tested with Canon CR2 (NEF, PEF, etc testing needed)
+ * Tested with Canon CR2 (NEF, PEF, etc need some fixes)
  * Written by Anton Keks
  * Licensed under GPLv3
  */
