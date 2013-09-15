@@ -23,6 +23,7 @@
 #include <fuse.h>
 #include <dirent.h>
 #include <sys/time.h>
+#include <stdbool.h>
 
 #include "raw.c"
 
@@ -58,6 +59,10 @@ char *to_real_path(char *dest, const char *path)  {
 	return dest;
 }
 
+bool is_supported_file(const char *path) {
+    return ends_with(path, ".CR2") || ends_with(path, ".cr2");
+}
+
 static int rawfs_getattr(const char *path, struct stat *stbuf) {
 	char new_path[PATH_MAX];
 	path = to_real_path(new_path, path);
@@ -66,7 +71,9 @@ static int rawfs_getattr(const char *path, struct stat *stbuf) {
 	if (res == -1)
 		return -errno;
 
-    stbuf->st_size = jpeg_size(path);
+    if (S_ISREG(stbuf->st_mode) && is_supported_file(path)) {
+        stbuf->st_size = jpeg_size(path);
+    }
 	return 0;
 }
 
@@ -91,7 +98,7 @@ static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 	struct dirent *de;
 	while ((de = readdir(dp)) != NULL) {
-		if (de->d_type != DT_DIR && !(ends_with((char*)&de->d_name, ".CR2") || ends_with((char*)&de->d_name, ".cr2")))
+		if (de->d_type != DT_DIR && !is_supported_file((char*)&de->d_name))
 			continue;
 	
 		sprintf((char*)&new_path, "%s.jpg", de->d_name);
@@ -105,6 +112,12 @@ static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 static int rawfs_release(const char *path, struct fuse_file_info *fi) {
     struct img_data *img = (struct img_data*)(intptr_t)fi->fh;
+
+	if (flog) {
+	    fprintf(flog, "rawfs_release %s\n", path);
+	    fflush(flog);
+	}
+
     free(img->out);
     free(img);
 	return 0;
