@@ -57,6 +57,7 @@ int parse_raw(int fd, struct img_data *img) {
 	res = read(fd, &img->ifd_size, sizeof img->ifd_size);
 	if (res == -1) return -errno;
 	
+	// read IFD0
     struct tiff_tag tags[img->ifd_size];
     res = read(fd, tags, img->ifd_size * sizeof *tags);
   	if (res == -1) return -errno;
@@ -69,12 +70,31 @@ int parse_raw(int fd, struct img_data *img) {
 	    else if (tag->id == 0x8769) exif_offset = tag->val.i;
 	}
 	
-    short exif_num_entries = 0;
+	// read Exif SubIFD
+    short exif_num_entries;
     lseek(fd, exif_offset, SEEK_SET);
 	res = read(fd, &exif_num_entries, 2);
   	if (res == -1) return -errno;
+
+    struct tiff_tag exif[exif_num_entries];
+    res = read(fd, exif, exif_num_entries * sizeof *exif);
+  	if (res == -1) return -errno;
+	
+	int makernote_offset, usercomment_offset;
+	for (int i = 0; i < exif_num_entries; i++) {
+	    struct tiff_tag *tag = &exif[i];
+	    // printf("exif 0x%x = %d\n", tag->id, tag->val.i);
+	    if (tag->id == 0x927c) makernote_offset = tag->val.i;
+	    else if (tag->id == 0x9286) usercomment_offset = tag->val.i;
+	}
+	
+	short makernote_num_entries;
+    lseek(fd, makernote_offset, SEEK_SET);
+	res = read(fd, &makernote_num_entries, 2);
+  	if (res == -1) return -errno;
   	
-  	img->exif_data_length = exif_offset + exif_num_entries * sizeof *tags + 4;
+  	img->exif_data_length = usercomment_offset > makernote_offset ? usercomment_offset : makernote_offset;
+  	//exif_offset + 2 + exif_num_entries * sizeof *tags + 4;
 	img->out_length = EXIF_HEADER_LENGTH + img->exif_data_length + img->thumb_length-2;
 	return 0;
 }
