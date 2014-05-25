@@ -61,16 +61,20 @@ int parse_raw(int fd, struct img_data *img) {
     res = read(fd, tags, img->ifd_size * sizeof *tags);
   	if (res == -1) return -errno;
 
+    int exif_offset = 0x10e;
 	for (int i = 0; i < img->ifd_size; i++) {
 	    struct tiff_tag *tag = &tags[i];
 	    if (tag->id == 0x111) img->thumb_offset = tag->val.i;
 	    else if (tag->id == 0x117) img->thumb_length = tag->val.i;
+	    else if (tag->id == 0x8769) exif_offset = tag->val.i;
 	}
-
-    // next ifd offset is the length of whole exif
-	res = read(fd, &img->exif_data_length, 4);
+	
+    short exif_num_entries = 0;
+    lseek(fd, exif_offset, SEEK_SET);
+	res = read(fd, &exif_num_entries, 2);
   	if (res == -1) return -errno;
-
+  	
+  	img->exif_data_length = exif_offset + exif_num_entries * sizeof *tags + 4;
 	img->out_length = EXIF_HEADER_LENGTH + img->exif_data_length + img->thumb_length-2;
 	return 0;
 }
