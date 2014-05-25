@@ -79,23 +79,19 @@ int parse_raw(int fd, struct img_data *img) {
 	return 0;
 }
 
-int min(int a, int b) {
-    return a < b ? a : b;
-}
-
 int copy_exif_header(char *outp, struct img_data *img) {
 	memcpy(outp, EXIF_HEADER, EXIF_HEADER_LENGTH);
 	*(short*)&outp[4] = htons(8 + img->exif_data_length);  // exif data size in the APP1 marker
 	return EXIF_HEADER_LENGTH;
 }
 
-int copy_exif_data(char *outp, struct img_data *img, int offset, int size) {
-	int res = pread(img->fd, outp, min(size, img->exif_data_length), offset); // tiff header + exif data + etc
+int copy_exif_data(char *outp, struct img_data *img) {
+	int res = pread(img->fd, outp, img->exif_data_length, 0); // tiff header + exif data + etc
 	if (res == -1) return -errno;
 
 	int ifd_length = sizeof img->ifd_size + img->ifd_size * sizeof(struct tiff_tag);
 	int next_ifd = img->header.length + ifd_length;
-	if (next_ifd < offset + size) *(int*)&outp[next_ifd - offset] = 0;
+	*(int*)&outp[next_ifd] = 0;
 	return res;
 }
 
@@ -112,7 +108,7 @@ int prepare_jpeg(int fd, struct img_data *img) {
 	char *outp = img->out = malloc(img->out_length);
 	outp += copy_exif_header(outp, img);
 
-    res = copy_exif_data(outp, img, 0, img->exif_data_length);
+    res = copy_exif_data(outp, img);
     if (res < 0) return res; else outp += res;
     
     res = copy_jpeg_data(outp, img);
