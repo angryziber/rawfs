@@ -77,9 +77,9 @@ Steps to cross-compile:
 3. Extract both side-to-side into the same directory
 4. To cross-compile FUSE (from the fuse dir):
    ```bash
-      export CPPFLAGS=-I`pwd`/../arm-none-linux-gnueabi/include/
-      export CC=`pwd`/../arm-none-linux-gnueabi/bin/arm-none-linux-gnueabi-gcc
-      ./configure --host=arm-none-linux-gnueabi --prefix=`pwd`/target
+      export CPPFLAGS=-I`pwd`/../arm-marvell-linux-gnueabi/include/
+      export CC=`pwd`/../arm-marvell-linux-gnueabi/bin/arm-marvell-linux-gnueabi-gcc
+      ./configure --host=arm-marvell-linux-gnueabi --prefix=`pwd`/target
       make
       make install
    ```
