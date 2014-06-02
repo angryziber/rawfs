@@ -52,9 +52,9 @@ int ends_with(const char *s, const char *ending) {
 	return TRUE;
 }
 
-char *to_real_path(char *dest, const char *path)  {
+char *to_real_path(char *dest, const char *path) {
 	sprintf(dest, "%s%s", photos_path, path);
-	if (ends_with(dest, ".jpg"))
+	if (ends_with(dest, ".CR2.jpg") || ends_with(dest, ".cr2.jpg"))
 		dest[strlen(dest)-4] = 0;
 	return dest;
 }
@@ -78,14 +78,14 @@ static int rawfs_getattr(const char *path, struct stat *stbuf) {
 }
 
 static int rawfs_readlink(const char *path, char *buf, size_t size) {
-	char new_path[PATH_MAX];
-	path = to_real_path(new_path, path);
+    char new_path[PATH_MAX];
+    path = to_real_path(new_path, path);
 
-	int res = readlink(path, buf, size - 1);
-	if (res == -1)
-		return -errno;
+    int res = readlink(path, buf, size - 1);
+    if (res == -1)
+	    return -errno;
 
-	buf[res] = '\0';
+    buf[res] = '\0';
 	return 0;
 }
 
@@ -98,11 +98,12 @@ static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 	struct dirent *de;
 	while ((de = readdir(dp)) != NULL) {
-		if (de->d_type != DT_DIR && !is_supported_file((char*)&de->d_name))
-			continue;
+	    char *path = de->d_name;
+	    
+		if (de->d_type != DT_DIR && is_supported_file(path))
+    		sprintf(path = (char*)&new_path, "%s.jpg", de->d_name);
 	
-		sprintf((char*)&new_path, "%s.jpg", de->d_name);
-		if (filler(buf, de->d_type != DT_DIR ? new_path : de->d_name, NULL, 0))
+		if (filler(buf, path, NULL, 0))
 			break;
 	}
 
@@ -118,7 +119,8 @@ static int rawfs_release(const char *path, struct fuse_file_info *fi) {
 	    fflush(flog);
 	}
 
-    free(img->out);
+    if (img->fd) close(img->fd);
+    if (img->out) free(img->out);
     free(img);
 	return 0;
 }
@@ -127,25 +129,29 @@ static int rawfs_open(const char *path, struct fuse_file_info *fi) {
 	char new_path[PATH_MAX];
 	path = to_real_path(new_path, path);
 
-	int fd = open(path, fi->flags);
-	if (fd == -1)
-		return -errno;
-		
-	struct img_data *img = malloc(sizeof *img);
-	int res = prepare_jpeg(fd, img);
-	fi->fh = (uintptr_t)img;
-	
 	if (flog) {
 	    fprintf(flog, "rawfs_open %s\n", path);
 	    fflush(flog);
 	}
 
-	close(fd);
-	if (res < 0) {
-	    rawfs_release(path, fi);
-	    return res;	    
-	}
+	int fd = open(path, fi->flags);
+	if (fd == -1)
+		return -errno;
+	
+	struct img_data *img = malloc(sizeof *img);
+	fi->fh = (uintptr_t) img;
+
+    int res = prepare_jpeg(fd, img);
+    if (res < 0 && res != -1) {
+        rawfs_release(path, fi);
+        return res; 
+    }
+
 	return 0;
+}
+
+static bool is_passthrough(struct img_data* img) {
+    return img->out_length == 0;
 }
 
 static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
@@ -154,11 +160,16 @@ static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, st
 	    fprintf(flog, "rawfs_read %zu %zu %u\n", size, offset, img->out_length);
 	    fflush(flog);
 	}
-
-    if (offset > img->out_length) return 0;
-    if (offset + size > img->out_length) size = img->out_length - offset;
-    memcpy(buf, img->out + offset, size);
-	return size;
+	
+	if (is_passthrough(img)) {
+	    return pread(img->fd, buf, size, offset);
+	}
+	else {
+        if (offset > img->out_length) return 0;
+        if (offset + size > img->out_length) size = img->out_length - offset;
+        memcpy(buf, img->out + offset, size);
+	    return size;
+    }
 }
 
 static struct fuse_operations rawfs_oper = {
