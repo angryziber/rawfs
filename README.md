@@ -9,7 +9,7 @@ that don't support RAW files properly.
 You can easily mount your RAW photos directory to another location
 and browse it with a JPEG-only tool without noticing.
 
-Unsupported files will not be shown. No additional disk space is used when mounting.
+Unsupported files will be passed-through. No additional disk space is used when mounting.
 JPEG thumbnails are served directly from the original RAW files.
 
 The original exif data is also added to the jpegs, so that autorotation, etc will work.
@@ -25,7 +25,7 @@ Download
 
 You can download Linux 64-bit binaries and Synology ARM binaries from [github releases](https://github.com/angryziber/rawfs/releases).
 
-For Synology you will need both libfuse.so.2 and rawfs-arm.
+For Synology you will need both *libfuse.so.2* and *rawfs-arm*.
 
 Usage
 -----
