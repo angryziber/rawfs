@@ -86,4 +86,5 @@ Steps to cross-compile:
 
 5. Clone rawfs side-by-side with fuse and the toolchain
 6. ./build-arm.sh - this will get you a nice rawfs-arm binary! Unfortunately, I didn't manage to link it with -static, so you will also need libfuse.so.2
-7. Now upload both rawfs-arm and libfuse.so.2 to your device and run as indicated in the Usage section above
+7. Now upload both rawfs-arm and libfuse.so.2 to your device and run as indicated in the Usage section above.
+   Or use ./install-nas.sh example script for that.
