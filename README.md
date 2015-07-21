@@ -3,6 +3,8 @@ rawfs
 
 FUSE filesystem that shows RAW image files (eg Canon CR2) as their embedded JPEGs.
 
+For Linux, Mac OS X, Synology or other Linux-based NAS devices.
+
 Very useful if you have bunch of apps that you want to use on your photos
 that don't support RAW files properly.
 
