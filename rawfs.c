@@ -173,13 +173,16 @@ static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, st
 }
 
 static int rawfs_unlink(const char* path) {
-    char new_path[PATH_MAX];
-    path = to_real_path(new_path, path);
+    char real_path[PATH_MAX];
+    path = to_real_path(real_path, path);
     return unlink(path);
 }
 
 static int rawfs_rename(const char* from, const char* to) {
-    return -1;  // TODO: moving files and renaming directories
+    char real_from[PATH_MAX], real_to[PATH_MAX];
+    from = to_real_path(real_from, from);
+    to = to_real_path(real_to, to);
+    return rename(from, to);
 }
 
 static struct fuse_operations rawfs_oper = {
