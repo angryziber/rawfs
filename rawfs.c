@@ -53,7 +53,11 @@ int ends_with(const char *s, const char *ending) {
 }
 
 char *to_real_path(char *dest, const char *path) {
-	sprintf(dest, "%s%s", photos_path, path);
+	if (path[0] == '/')
+		sprintf(dest, "%s%s", photos_path, path);
+	else
+		sprintf(dest, "%s", path);
+
 	if (ends_with(dest, ".CR2.jpg") || ends_with(dest, ".cr2.jpg"))
 		dest[strlen(dest)-4] = 0;
 	return dest;
@@ -160,46 +164,53 @@ static bool is_passthrough(struct img_data* img) {
 }
 
 static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
-    struct img_data *img = (struct img_data*)(intptr_t)fi->fh;
+	struct img_data *img = (struct img_data*)(intptr_t)fi->fh;
 	if (flog) {
 	    fprintf(flog, "rawfs_read %zu %zu %u\n", size, offset, img->out_length);
 	    fflush(flog);
 	}
 	
 	if (is_passthrough(img)) {
-	    return pread(img->fd, buf, size, offset);
+		return pread(img->fd, buf, size, offset);
 	}
 	else {
-        if (offset > img->out_length) return 0;
-        if (offset + size > img->out_length) size = img->out_length - offset;
-        memcpy(buf, img->out + offset, size);
-	    return size;
-    }
+		if (offset > img->out_length) return 0;
+		if (offset + size > img->out_length) size = img->out_length - offset;
+		memcpy(buf, img->out + offset, size);
+		return size;
+	}
 }
 
 static int rawfs_unlink(const char* path) {
     char real_path[PATH_MAX];
     path = to_real_path(real_path, path);
-    return unlink(path);
+    return unlink(path) == 0 ? 0 : -errno;
 }
 
 static int rawfs_rmdir(const char* path) {
     char real_path[PATH_MAX];
     path = to_real_path(real_path, path);
-    return rmdir(path);
+    return rmdir(path) == 0 ? 0 : -errno;
 }
 
 static int rawfs_mkdir(const char* path, mode_t mode) {
     char real_path[PATH_MAX];
     path = to_real_path(real_path, path);
-    return mkdir(path, mode);
+    return mkdir(path, mode) == 0 ? 0 : -errno;
 }
 
 static int rawfs_rename(const char* from, const char* to) {
     char real_from[PATH_MAX], real_to[PATH_MAX];
     from = to_real_path(real_from, from);
     to = to_real_path(real_to, to);
-    return rename(from, to);
+    return rename(from, to) == 0 ? 0 : -errno;
+}
+
+static int rawfs_symlink(const char *from, const char *to) {
+    char real_from[PATH_MAX], real_to[PATH_MAX];
+    from = to_real_path(real_from, from);
+    to = to_real_path(real_to, to);
+    return symlink(from, to) == 0 ? 0 : -errno;
 }
 
 static struct fuse_operations rawfs_oper = {
@@ -213,6 +224,7 @@ static struct fuse_operations rawfs_oper = {
 	.rmdir		= rawfs_rmdir,
 	.mkdir		= rawfs_mkdir,
 	.rename		= rawfs_rename,
+	.symlink	= rawfs_symlink,
 	.flag_nullpath_ok = 1
 };
 
