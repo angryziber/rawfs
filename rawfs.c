@@ -172,13 +172,26 @@ static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, st
     }
 }
 
+static int rawfs_unlink(const char* path) {
+    char new_path[PATH_MAX];
+    path = to_real_path(new_path, path);
+    return unlink(path);
+}
+
+static int rawfs_rename(const char* from, const char* to) {
+    return -1;  // TODO: moving files and renaming directories
+}
+
 static struct fuse_operations rawfs_oper = {
 	.getattr	= rawfs_getattr,
 	.readlink	= rawfs_readlink,
 	.readdir	= rawfs_readdir,
 	.open		= rawfs_open,
-	.release    = rawfs_release,
-	.read		= rawfs_read
+	.release    	= rawfs_release,
+	.read		= rawfs_read,
+	.unlink		= rawfs_unlink,
+	.rename		= rawfs_rename,
+// TODO for efficiency	.flag_nullpath_ok = 1
 };
 
 int main(int argc, char *argv[]) {
