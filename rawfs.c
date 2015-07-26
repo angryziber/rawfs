@@ -60,7 +60,7 @@ char *to_real_path(char *dest, const char *path) {
 }
 
 bool is_supported_file(const char *path) {
-    return ends_with(path, ".CR2") || ends_with(path, ".cr2");
+	return ends_with(path, ".CR2") || ends_with(path, ".cr2");
 }
 
 static int rawfs_getattr(const char *path, struct stat *stbuf) {
@@ -71,21 +71,20 @@ static int rawfs_getattr(const char *path, struct stat *stbuf) {
 	if (res == -1)
 		return -errno;
 
-    if (S_ISREG(stbuf->st_mode) && is_supported_file(path)) {
-        stbuf->st_size = jpeg_size(path);
-    }
+	if (S_ISREG(stbuf->st_mode) && is_supported_file(path))
+		stbuf->st_size = jpeg_size(path);
 	return 0;
 }
 
 static int rawfs_readlink(const char *path, char *buf, size_t size) {
-    char new_path[PATH_MAX];
-    path = to_real_path(new_path, path);
+	char new_path[PATH_MAX];
+	path = to_real_path(new_path, path);
 
-    int res = readlink(path, buf, size - 1);
-    if (res == -1)
-	    return -errno;
+	int res = readlink(path, buf, size - 1);
+	if (res == -1)
+		return -errno;
 
-    buf[res] = '\0';
+	buf[res] = '\0';
 	return 0;
 }
 
@@ -98,10 +97,10 @@ static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 
 	struct dirent *de;
 	while ((de = readdir(dp)) != NULL) {
-	    char *path = de->d_name;
-	    
+		char *path = de->d_name;
+	
 		if (de->d_type != DT_DIR && is_supported_file(path))
-    		sprintf(path = (char*)&new_path, "%s.jpg", de->d_name);
+			sprintf(path = (char*)&new_path, "%s.jpg", de->d_name);
 	
 		if (filler(buf, path, NULL, 0))
 			break;
@@ -208,7 +207,7 @@ static struct fuse_operations rawfs_oper = {
 	.rmdir		= rawfs_rmdir,
 	.mkdir		= rawfs_mkdir,
 	.rename		= rawfs_rename,
-// TODO for efficiency	.flag_nullpath_ok = 1
+	.flag_nullpath_ok = 1
 };
 
 int main(int argc, char *argv[]) {
