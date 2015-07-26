@@ -95,14 +95,22 @@ static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 	if (dp == NULL)
 		return -errno;
 
+	struct stat stbuf;
+	memset(&stbuf, 0, sizeof(stbuf));
+
 	struct dirent *de;
 	while ((de = readdir(dp)) != NULL) {
 		char *path = de->d_name;
 	
 		if (de->d_type != DT_DIR && is_supported_file(path))
 			sprintf(path = (char*)&new_path, "%s.jpg", de->d_name);
+
+		stbuf.st_ino = de->d_ino;
+		stbuf.st_mode = de->d_type == DT_DIR ? S_IFDIR :
+				de->d_type == DT_LNK ? S_IFLNK :
+				S_IFREG;
 	
-		if (filler(buf, path, NULL, 0))
+		if (filler(buf, path, &stbuf, 0))
 			break;
 	}
 
