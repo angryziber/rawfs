@@ -184,6 +184,12 @@ static int rawfs_rmdir(const char* path) {
     return rmdir(path);
 }
 
+static int rawfs_mkdir(const char* path, mode_t mode) {
+    char real_path[PATH_MAX];
+    path = to_real_path(real_path, path);
+    return mkdir(path, mode);
+}
+
 static int rawfs_rename(const char* from, const char* to) {
     char real_from[PATH_MAX], real_to[PATH_MAX];
     from = to_real_path(real_from, from);
@@ -200,6 +206,7 @@ static struct fuse_operations rawfs_oper = {
 	.read		= rawfs_read,
 	.unlink		= rawfs_unlink,
 	.rmdir		= rawfs_rmdir,
+	.mkdir		= rawfs_mkdir,
 	.rename		= rawfs_rename,
 // TODO for efficiency	.flag_nullpath_ok = 1
 };
