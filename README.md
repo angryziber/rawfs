@@ -19,7 +19,7 @@ The original exif data is also added to the jpegs, so that autorotation, etc wil
 Limitations
 -----------
 
-* Filesystem is read-only, thus only for browsing
+* Filesystem is mostly read-only, with a few exceptions: delete, rename, move, mkdir, symlink. All other write operations will fail.
 * Tested only with Canon CR2 files (Nikon NEF, Pentax PEF, etc need some fixes)
 
 Download
