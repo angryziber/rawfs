@@ -10,10 +10,11 @@ NAS=nas.local
 PHOTOS=/volume1/Photos
 MOUNTPOINT=/volume1/photo
 DEST=/root
-START_SCRIPT=/etc/init.d/S99rawfs
+START_SCRIPT=/etc/rc.rawfs
 
 scp rawfs-arm $NAS:$DEST
 ssh $NAS "echo '$DEST/rawfs-arm $PHOTOS $MOUNTPOINT -o allow_other' > $START_SCRIPT;
 chmod a+x $START_SCRIPT;
 rm -fr $MOUNTPOINT/@eaDir;
 $START_SCRIPT"
+echo "You may add /etc/rc.rawfs to /etc/rc.local to start rawfs after reboot"
