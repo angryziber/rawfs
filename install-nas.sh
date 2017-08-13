@@ -17,4 +17,4 @@ ssh $NAS "echo '$DEST/rawfs-arm $PHOTOS $MOUNTPOINT -o allow_other' > $START_SCR
 chmod a+x $START_SCRIPT;
 rm -fr $MOUNTPOINT/@eaDir;
 $START_SCRIPT"
-echo "You may add /etc/rc.rawfs to /etc/rc.local to start rawfs after reboot"
+echo "You may add a triggered task now /etc/rc.rawfs to start rawfs after reboot"
