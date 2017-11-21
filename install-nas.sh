@@ -13,8 +13,7 @@ DEST=/root
 START_SCRIPT=/etc/rc.rawfs
 
 scp rawfs-arm $NAS:$DEST
-ssh $NAS "echo '$DEST/rawfs-arm $PHOTOS $MOUNTPOINT -o allow_other' > $START_SCRIPT;
+ssh $NAS "echo 'rm -fr $MOUNTPOINT/@eaDir; $DEST/rawfs-arm $PHOTOS $MOUNTPOINT -o allow_other' > $START_SCRIPT;
 chmod a+x $START_SCRIPT;
-rm -fr $MOUNTPOINT/@eaDir;
 $START_SCRIPT"
 echo "You may add a triggered task now /etc/rc.rawfs to start rawfs after reboot"
