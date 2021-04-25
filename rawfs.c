@@ -7,7 +7,7 @@
 
 #define FUSE_USE_VERSION 26
 
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 #define TRUE 1
 #define FALSE 0
 
@@ -239,14 +239,13 @@ int main(int argc, char *argv[]) {
         return 1;
 
 //    flog = fopen("rawfs.log", "wt");
-    
+
     photos_path = realpath(argv[1], NULL);
     if (!photos_path) {
         fprintf(stderr, "rawfs: cannot read %s\n", argv[1]);
         return 2;
     }
-        
-	umask(0);
-	return fuse_main(argc-1, argv+1, &rawfs_oper, NULL);
-}
 
+    umask(0);
+    return fuse_main(argc-1, argv+1, &rawfs_oper, NULL);
+}
