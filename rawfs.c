@@ -69,6 +69,8 @@ bool is_supported_file(const char *path) {
 	return ends_with(path, ".CR2") || ends_with(path, ".cr2");
 }
 
+__asm__(".symver lstat64,__lxstat64@GLIBC_2.2.5");
+
 static int rawfs_getattr(const char *path, struct stat *stbuf) {
 	char new_path[PATH_MAX];
 	path = to_real_path(new_path, path);
