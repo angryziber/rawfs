@@ -24,6 +24,8 @@
 #include <dirent.h>
 #include <sys/time.h>
 #include <stdbool.h>
+#include <signal.h>
+#include <execinfo.h>
 
 #include "raw.c"
 
@@ -228,7 +230,22 @@ static struct fuse_operations rawfs_oper = {
 	.flag_nullpath_ok = 1
 };
 
+void crash_handler(int sig) {
+  void *array[10];
+  size_t size;
+
+  // get void*'s for all entries on the stack
+  size = backtrace(array, 10);
+
+  // print out all the frames to stderr
+  fprintf(stderr, "Error: signal %d:\n", sig);
+  backtrace_symbols_fd(array, size, STDERR_FILENO);
+  exit(1);
+}
+
 int main(int argc, char *argv[]) {
+    signal(SIGSEGV, crash_handler);
+
     if (argc < 3) 
         fprintf(stderr, "usage: %s original_dir mountpoint [options]\n", argv[0]);
 
