@@ -123,16 +123,16 @@ static int rawfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, of
 }
 
 static int rawfs_release(const char *path, struct fuse_file_info *fi) {
-    struct img_data *img = (struct img_data*)(intptr_t)fi->fh;
+  struct img_data *img = (struct img_data*)(intptr_t)fi->fh;
 
 	if (flog) {
-	    fprintf(flog, "rawfs_release %s\n", path);
-	    fflush(flog);
+    fprintf(flog, "rawfs_release %s\n", path);
+    fflush(flog);
 	}
 
-    if (img->fd) close(img->fd);
-    if (img->out) free(img->out);
-    free(img);
+  if (img->fd) close(img->fd);
+  if (img->out) free(img->out);
+  free(img);
 	return 0;
 }
 
@@ -141,8 +141,8 @@ static int rawfs_open(const char *path, struct fuse_file_info *fi) {
 	path = to_real_path(new_path, path);
 
 	if (flog) {
-	    fprintf(flog, "rawfs_open %s\n", path);
-	    fflush(flog);
+    fprintf(flog, "rawfs_open %s\n", path);
+    fflush(flog);
 	}
 
 	int fd = open(path, fi->flags);
@@ -152,24 +152,24 @@ static int rawfs_open(const char *path, struct fuse_file_info *fi) {
 	struct img_data *img = malloc(sizeof *img);
 	fi->fh = (uintptr_t) img;
 
-    int res = prepare_jpeg(fd, img);
-    if (res < 0 && res != -1) {
-        rawfs_release(path, fi);
-        return res; 
-    }
+  int res = prepare_jpeg(fd, img);
+  if (res < 0 && res != -1) {
+    rawfs_release(path, fi);
+    return res;
+  }
 
 	return 0;
 }
 
 static bool is_passthrough(struct img_data* img) {
-    return img->out_length == 0;
+  return img->out_length == 0;
 }
 
 static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi) {
 	struct img_data *img = (struct img_data*)(intptr_t)fi->fh;
 	if (flog) {
-	    fprintf(flog, "rawfs_read %zu %zu %u\n", size, offset, img->out_length);
-	    fflush(flog);
+    fprintf(flog, "rawfs_read %zu %zu %u\n", size, offset, img->out_length);
+    fflush(flog);
 	}
 	
 	if (is_passthrough(img)) {
@@ -184,35 +184,35 @@ static int rawfs_read(const char *path, char *buf, size_t size, off_t offset, st
 }
 
 static int rawfs_unlink(const char* path) {
-    char real_path[PATH_MAX];
-    path = to_real_path(real_path, path);
-    return unlink(path) == 0 ? 0 : -errno;
+  char real_path[PATH_MAX];
+  path = to_real_path(real_path, path);
+  return unlink(path) == 0 ? 0 : -errno;
 }
 
 static int rawfs_rmdir(const char* path) {
-    char real_path[PATH_MAX];
-    path = to_real_path(real_path, path);
-    return rmdir(path) == 0 ? 0 : -errno;
+  char real_path[PATH_MAX];
+  path = to_real_path(real_path, path);
+  return rmdir(path) == 0 ? 0 : -errno;
 }
 
 static int rawfs_mkdir(const char* path, mode_t mode) {
-    char real_path[PATH_MAX];
-    path = to_real_path(real_path, path);
-    return mkdir(path, mode) == 0 ? 0 : -errno;
+  char real_path[PATH_MAX];
+  path = to_real_path(real_path, path);
+  return mkdir(path, mode) == 0 ? 0 : -errno;
 }
 
 static int rawfs_rename(const char* from, const char* to) {
-    char real_from[PATH_MAX], real_to[PATH_MAX];
-    from = to_real_path(real_from, from);
-    to = to_real_path(real_to, to);
-    return rename(from, to) == 0 ? 0 : -errno;
+  char real_from[PATH_MAX], real_to[PATH_MAX];
+  from = to_real_path(real_from, from);
+  to = to_real_path(real_to, to);
+  return rename(from, to) == 0 ? 0 : -errno;
 }
 
 static int rawfs_symlink(const char *from, const char *to) {
-    char real_from[PATH_MAX], real_to[PATH_MAX];
-    from = to_real_path(real_from, from);
-    to = to_real_path(real_to, to);
-    return symlink(from, to) == 0 ? 0 : -errno;
+  char real_from[PATH_MAX], real_to[PATH_MAX];
+  from = to_real_path(real_from, from);
+  to = to_real_path(real_to, to);
+  return symlink(from, to) == 0 ? 0 : -errno;
 }
 
 static struct fuse_operations rawfs_oper = {
@@ -244,25 +244,25 @@ void crash_handler(int sig) {
 }
 
 int main(int argc, char *argv[]) {
-    signal(SIGSEGV, crash_handler);
+  signal(SIGSEGV, crash_handler);
 
-    if (argc < 3) 
-        fprintf(stderr, "usage: %s original_dir mountpoint [options]\n", argv[0]);
+  if (argc < 3)
+    fprintf(stderr, "usage: %s original_dir mountpoint [options]\n", argv[0]);
 
-    if (argc == 2 && argv[1][0] == '-') 
-        return fuse_main(argc, argv, &rawfs_oper, NULL);
+  if (argc == 2 && argv[1][0] == '-')
+    return fuse_main(argc, argv, &rawfs_oper, NULL);
 
-    if (argc < 3)
-        return 1;
+  if (argc < 3)
+    return 1;
 
 //    flog = fopen("rawfs.log", "wt");
 
-    photos_path = realpath(argv[1], NULL);
-    if (!photos_path) {
-        fprintf(stderr, "rawfs: cannot read %s\n", argv[1]);
-        return 2;
-    }
+  photos_path = realpath(argv[1], NULL);
+  if (!photos_path) {
+    fprintf(stderr, "rawfs: cannot read %s\n", argv[1]);
+    return 2;
+  }
 
-    umask(0);
-    return fuse_main(argc-1, argv+1, &rawfs_oper, NULL);
+  umask(0);
+  return fuse_main(argc-1, argv+1, &rawfs_oper, NULL);
 }
