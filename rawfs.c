@@ -146,16 +146,22 @@ static int rawfs_open(const char *path, struct fuse_file_info *fi) {
 	}
 
 	int fd = open(path, fi->flags);
-	if (fd == -1)
-		return -errno;
-	
+	if (fd == -1) return -errno;
+
 	struct img_data *img = malloc(sizeof *img);
 	fi->fh = (uintptr_t) img;
 
-  int res = prepare_jpeg(fd, img);
-  if (res < 0 && res != -1) {
-    rawfs_release(path, fi);
-    return res;
+  if (is_supported_file(path)) {
+    int res = prepare_jpeg(fd, img);
+    if (res < 0 && res != -1) {
+      rawfs_release(path, fi);
+      return res;
+    }
+  }
+  else {
+    img->fd = fd;
+    img->out = 0;
+    img->out_length = 0;
   }
 
 	return 0;
@@ -216,17 +222,17 @@ static int rawfs_symlink(const char *from, const char *to) {
 }
 
 static struct fuse_operations rawfs_oper = {
-	.getattr	= rawfs_getattr,
-	.readlink	= rawfs_readlink,
-	.readdir	= rawfs_readdir,
-	.open		= rawfs_open,
-	.release    	= rawfs_release,
-	.read		= rawfs_read,
-	.unlink		= rawfs_unlink,
-	.rmdir		= rawfs_rmdir,
-	.mkdir		= rawfs_mkdir,
-	.rename		= rawfs_rename,
-	.symlink	= rawfs_symlink,
+	.getattr  = rawfs_getattr,
+	.readlink = rawfs_readlink,
+	.readdir  = rawfs_readdir,
+	.open     = rawfs_open,
+	.release  = rawfs_release,
+	.read     = rawfs_read,
+	.unlink   = rawfs_unlink,
+	.rmdir    = rawfs_rmdir,
+	.mkdir    = rawfs_mkdir,
+	.rename	  = rawfs_rename,
+	.symlink  = rawfs_symlink,
 	.flag_nullpath_ok = 1
 };
 
