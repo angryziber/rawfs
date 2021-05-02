@@ -27,7 +27,7 @@ Download
 
 You can download Linux 64-bit binaries and Synology ARM binaries from [github releases](https://github.com/angryziber/rawfs/releases).
 
-For Synology you will need both *libfuse.so.2* and *rawfs-arm*.
+For ARM-based Synology, you will need both *libfuse.so.2* and *rawfs-arm*.
 
 Usage
 -----
