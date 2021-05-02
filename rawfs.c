@@ -33,15 +33,15 @@ FILE *flog = NULL;
 char *photos_path = NULL;
 
 int jpeg_size(const char *path) {
-    struct img_data img;
-    img.out_length = 0;
+  struct img_data img;
+  img.out_length = 0;
 	int fd = open(path, O_RDONLY);
-    if (fd != -1) {
-        int res = parse_raw(fd, &img);
+  if (fd != -1) {
+    int res = parse_raw(fd, &img);
 		close(fd);
 		if (res < 0) return res;
-    }
-    return img.out_length;
+  }
+  return img.out_length;
 }
 
 int ends_with(const char *s, const char *ending) {
